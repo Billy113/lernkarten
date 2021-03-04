@@ -17,7 +17,12 @@ Promise.all(promises).then(() => {
             })
         }
     }
-})
+});
+function parseText(cards) {
+    cards.answer = cards.answer.replace('"', "'")
+    cards.question = cards.question.replace('"', "'")
+    return cards;
+}
 function readLinks(url) {
     return new Promise(resolve => {
             rp(url)
