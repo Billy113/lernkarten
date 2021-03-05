@@ -14,6 +14,9 @@ class IndexedDbHandler {
     logIn(name) {
         this.store("user", name, 1);
     }
+    logout() {
+        this.emptyDatabase("user");
+    }
     loggedIn() {
         return new Promise(resolve => {
             this.readAsPromise("user",1).then(result => {

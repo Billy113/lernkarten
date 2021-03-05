@@ -1,9 +1,11 @@
 
-let colorArray=["#019875","#1E8BC3","#D91E18","#D35400","#8E44AD","#C0392B"];
 let cardState;
 let currentQuestion=0;
+let answerResult = false;
 let qbank=new Array;
-
+let color1 = '#1972c5';
+let color2= '#019875';
+toggleListenerSet = false;
 function loadDB(json){
     for(i=0;i<json.questionlist.length;i++){
         qbank[i]=[];
@@ -13,29 +15,34 @@ function loadDB(json){
     displayCard();
 }
 function displayCard(){
-    cardState=0;
-    let color1=colorArray[Math.floor(Math.random()*colorArray.length)];
+    cardState=false;
     $("#cardArea").empty();
     $("#cardArea").append('<div id="card1" class="card">' + qbank[currentQuestion][0] + '</div>');
     $("#cardArea").append('<div id="card2" class="card">' + qbank[currentQuestion][1] + '</div>');
     $("#card1").css("background-color",color1);
-    $("#card2").css("background-color","#34495E");
-    $("#card2").css("top","200px");
-    $("#cardArea").on("click",function(){
-        if(cardState!=1){
-            cardState=1;
-            $("#card1").animate({top: "-=200"}, 150, function() {cardState=0;togglePosition();});
-            $("#card2").animate({top: "-=200"}, 150, function() {togglePosition2();});
-        }
-    });
+    $("#card2").css("background-color",color2);
+    $("#card2").css("visibility","hidden");
+    if(!toggleListenerSet) {
+        $("#cardArea").on("click", toggleVisibility);
+        toggleListenerSet = true;
+    }
     currentQuestion++;
     $("#buttonArea").empty();
-    $("#buttonArea").append('<div class="button" id="nextButton">NEXT</div>');
-    $("#buttonArea").append('<div class="button" id="richtig">richtig</div>');
-    $("#buttonArea").append('<div class="button" id="falsch">falsch</div>');
+    $("#buttonArea").append('<div class="button" id="right">richtig</div>');
+    $("#buttonArea").append('<div class="button" id="wrong">falsch</div>');
+    $("#buttonArea").append('<div class="button" id="nextButton">Überspringen</div>');
     $("#nextButton").on("click",next);
-    $("#richtig").on("click",correct);
-    $("#falsch").on("click",wrong);
+    $("#right").on("click",rightAnswer);
+    $("#wrong").on("click",wrongAnswer);
+    $("#wrong").css("background-color", "#c51919");
+
+    $("#badCard").empty();
+    $("#badCard").append('<div class="button" id="bad">schlecht</div>');
+    $("#badCard").append('<div class="button" id="duplicate">doppelt</div>');
+    $("#badCard").append('<div class="button" id="duplicate">verbessern</div>');
+
+    $("#badCard").append('<div class="button" id="back"">zurück</div>');
+    $("#back").on("click", displayMainMenu);
 }
 function next() {
     if(currentQuestion<qbank.length){
@@ -45,18 +52,24 @@ function next() {
         displayFinalMessage();
     }
 }
-function correct() {
-
+function wrongAnswer(id) {
+    buildPostRequest("/answer",{"result":false, "cardId":id});
+    next();
 }
-function wrong() {
-
+function rightAnswer(id) {
+    buildPostRequest("/answer",{"result":true, "cardId":id});
+    next();
 }
-function togglePosition(){
-    if($("#card1").position().top==-200){$("#card1").css("top","200px");};
-}
-
-function togglePosition2(){
-    if($("#card2").position().top==-200){$("#card2").css("top","200px");};
+function toggleVisibility(){
+    console.log("toggle" + cardState)
+    if(cardState) {
+        $("#card2").css("visibility","hidden");
+        $("#card1").css("visibility","visible");
+    } else {
+        $("#card2").css("visibility","visible");
+        $("#card1").css("visibility","hidden");
+    }
+    cardState = !cardState;
 }
 function displayFinalMessage(){
     $("#buttonArea").empty();

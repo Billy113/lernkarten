@@ -2,27 +2,14 @@ const express = require('express');
 const cardRouter= express.Router();
 const connectionPool = require('../databaseConnectionPool');
 const Promise = require('bluebird');
-let cards = {"questionlist":[
-    {"cardfront":"CAT",
-    "cardback":"<li>GATO<li>GATO<li>GATO<li>GATO<li>GATO<li>GATO<li>GATO<li>GATO"
-    },
-    {"cardfront":"DOG",
-    "cardback":"PERRO"
-    },
-    {"cardfront":"HORSE",
-    "cardback":"CABALLO"
-    },
-    {"cardfront":"RABBIT",
-    "cardback":"CONEJO"
-    },
-    {"cardfront":"TIGER",
-    "cardback":"TIGRE"
-    },
-    {"cardfront":"KANGAROO",
-    "cardback":"CANGURO"
-    }
-    ]};
 cardRouter.post('/', (req, res) => {
+    readCards(req.body.name).then(cards => {
+        console.log(req.body.name)
+        let name = req.body.name;
+        res.status(200).send(cards);
+    })
+});
+cardRouter.post('/create', (req, res) => {
     readCards(req.body.name).then(cards => {
         console.log(req.body.name)
         let name = req.body.name;

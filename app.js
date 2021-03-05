@@ -3,7 +3,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
 
-const cardRouter = require('./routes/cards');
+const cardRouter = require('./routes/cardsrouter');
+const userRouter = require('./routes/userRouter');
 const apiPath = "/v1";
 //init express
 const app = express();
@@ -22,6 +23,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(`${apiPath}/cards`, cardRouter);
+app.use(`${apiPath}/user`, userRouter);
 
 //init server on the defined PORTusr
 app.listen(PORT, "::1", () => {

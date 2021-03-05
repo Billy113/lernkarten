@@ -11,34 +11,37 @@ font-size:38px;
 margin-top:50px;
 }
 #cardArea{
-width:300px;
-height:200px;
+width:100vw;
+height:50vh;
 margin:auto;
-margin-top:80px;
+margin-top:2vh;
 border:3px solid #ABB7B7;
 border-radius:5px;
 position:relative;
-overflow:hidden;
+overflow: inherit;
 }
 .card {
-width:300px;
-height:200px;
+width:100vw;
+height:50vh;
+overflow: auto;
 position:absolute;
-text-align:center;
-line-height:200px;
-font-size:45px;
-color:#efefef;
+font-size:20px;
+color:#000000;
 cursor:pointer;
 }
+#buttonArea, #badCard{
+    display: -webkit-inline-box;
+    margin-left: 15%;
+}
 .button{
-width:80px;
+width:15vw;
 text-align:center;
 font-size:20px;
 padding:10px;
 cursor:pointer;
 color:#efefef;
-margin:auto;
-margin-top:30px;
+margin-top:15px;
+margin-left: 10px;
 background-color:#019875;
 border: 2px solid #1E824C;
 border-radius:5px;

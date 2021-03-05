@@ -1,14 +1,15 @@
 const BACKEND_URL = "http://localhost:8001/v1"
 //const BACKEND_URL = "https://www.featurecat.de/api/v1";
-let user = "billy";
+let user;
+let cards;
 function init() {
   document.indexDBHandler = new IndexedDbHandler();
   document.indexDBHandler.loggedIn().then(result => {
     if(result) {
+          user = result;
           displayMainMenu();
     } else {
-          displayCards();
-          //displayLogin();
+          displayLogin();
     }
   })
 }
@@ -38,24 +39,50 @@ function displayLogin() {
   })
 }
 function displayMainMenu() {
-  fetchAndAppendToBody("./main_menu.html").then(() => {
-    document.getElementById("header_text").innerHTML = ` &#x1f408; Frohe Weihnachten ${user} &#x1f408;`
+  fetchAndAppendToBody("./main.html").then(() => {
+    document.getElementById("activityTitle").innerHTML = "Lernkarten FiSi - Angemeldet als " + user;
     registerMainMenueListener()
   })
 }
 function registerLoginListener() {
   document.getElementById("login").addEventListener("click", handleLogin);
+  document.getElementById("create").addEventListener("click", createAccount);
+}
+function createAccount(event) {
+  buildPostRequest("/user/create", {"name" : document.getElementById("name").value}).then(result => {
+    if(result.status == 200) {
+      document.getElementById("activityTitle").innerHTML = `Neuen Nutzer ${document.getElementById("name").value} angelegt. Jetzt einloggen?`;
+    } else {
+      document.getElementById("activityTitle").innerHTML = "Nickname bereits vergeben";
+    }
+  })
 }
 function registerMainMenueListener() {
-  document.getElementById("random").addEventListener("click", playRandom);
-  document.getElementById("stats").addEventListener("click", showStats);
-  document.getElementById("create").addEventListener("click", createCard);
+  document.getElementById("newCard").addEventListener("click", createCard);
+  document.getElementById("stats").addEventListener("click", displayStats);
+  document.getElementById("lern").addEventListener("click", displayCards);
+  document.getElementById("logout").addEventListener("click", logout);
+}
+function logout() {
+  document.indexDBHandler.logout();
+  displayLogin();
+}
+function createCard() {
+
+}
+function displayStats() {
+
 }
 function handleLogin() {
-  let name = document.getElementById("name").value;
-  user = name;
-  indexedDB.logIn(name);
-  displayMainMenu();
+  buildPostRequest("/user/login", {"name" : document.getElementById("name").value}).then(result => {
+    if(result.status == 200) {
+      document.indexDBHandler.logIn(document.getElementById("name").value);
+      user = document.getElementById("name").value
+      displayMainMenu();
+    } else {
+      document.getElementById("activityTitle").innerHTML = "Nickname noch nicht vergeben";
+    }
+  })
 }
 function fetchAndAppendToBody(htmlURL) {
   return new Promise(resolve => {
@@ -69,7 +96,9 @@ function fetchAndAppendToBody(htmlURL) {
   })
 }
 function buildPostRequest(apiRoute, data) {
-  data.name = user;
+  if(!data.name) {
+    data.name = user;
+  }
   return fetch(BACKEND_URL + apiRoute, {
       method: 'POST',
        headers: {
