@@ -1,21 +1,22 @@
-
-const DBN = 'feature-cat';
-const DBV_VERSION = 2;
-const STORES = ["geheim", "media"];
-
+const DBN = 'lernkarten';
+const DBV_VERSION = 1;
+const STORES = ["user"];
 class IndexedDbHandler {
     constructor() {
     }
-    _createObjectStores(db) {
+    createObjectStores(db) {
         STORES.forEach(storename => {
             if (!db.objectStoreNames.contains(storename)) {
                 db.createObjectStore(storename, {autoIncrement: true});
             }
         });
     }
+    logIn(name) {
+        this.store("user", name, 1);
+    }
     loggedIn() {
         return new Promise(resolve => {
-            this.readAsPromise("geheim",1).then(result => {
+            this.readAsPromise("user",1).then(result => {
                     resolve (result)
             })
         })
@@ -31,7 +32,6 @@ class IndexedDbHandler {
                 console.log('DB error: ' + e.target.errorCode);
             };
             if (!key) {
-                console.log("no key")
                 store.put(data);
             } else {
                 store.put(data, key);
@@ -40,15 +40,12 @@ class IndexedDbHandler {
                 db.close();
             };
         };
-
         request.onerror = e => {
-            console.log('onerror called');
             console.log(e);
         };
         request.onupgradeneeded = e => {
-            this._createObjectStores(request.result);
+            this.createObjectStores(request.result);
         };
-
     }
     emptyDatabase(name) {
         console.log('emptyDatbase ' + name);
@@ -65,7 +62,6 @@ class IndexedDbHandler {
             };
         };
     }
-
     emptyDatabases() {
         STORES.forEach(name => {
             this.emptyDatabase(name);
@@ -76,7 +72,7 @@ class IndexedDbHandler {
             let request = window.indexedDB.open(DBN, DBV_VERSION), db, tx, store, index;
             request.onerror = e => { reject(e); };
             request.onupgradeneeded = () => {
-                this._createObjectStores(request.result);
+                this.createObjectStores(request.result);
             };
             request.onsuccess = (e) => {
                 db = request.result;
