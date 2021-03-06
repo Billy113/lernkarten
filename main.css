@@ -29,7 +29,31 @@ font-size:20px;
 color:#000000;
 cursor:pointer;
 }
-#buttonArea, #badCard{
+.input {
+    color: rgb(0, 0, 0);
+}
+.input{
+    width: 50vw;
+    height: 70vh;
+    left: 25vw;
+    position: absolute;
+    display: flex;
+}
+#newCardArea{
+    display: flex;
+    place-content: space-evenly;
+    flex-direction: column;
+}
+.inputAnswer{
+    top: 40vh;
+    height: 20vh;
+
+}
+.inputQuestion{
+    top: 18vh;
+    height: 20vh;
+}
+#buttonArea, #topButtonArea{
     display: -webkit-inline-box;
     margin-left: 15%;
 }

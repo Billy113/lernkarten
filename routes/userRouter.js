@@ -1,9 +1,8 @@
 const express = require('express');
-const cardRouter= express.Router();
+const userRouter= express.Router();
 const connectionPool = require('../databaseConnectionPool');
 const Promise = require('bluebird');
-const { resolve } = require('bluebird');
-cardRouter.post('/login', (req, res) => {
+userRouter.post('/login', (req, res) => {
         console.log(req.body.name)
         userExist(req.body.name).then(result => {
             if(result) {
@@ -13,11 +12,10 @@ cardRouter.post('/login', (req, res) => {
             }
         })
 });
-cardRouter.post('/create', (req, res) => {
+userRouter.post('/create', (req, res) => {
         console.log(req.body.name);
         userExist(req.body.name).then(result => {
             if(result) {
-                console.log("exist")
                 res.status(204).send();
             } else {
                 insertNewUser(req.body.name).then(result =>{
@@ -29,6 +27,17 @@ cardRouter.post('/create', (req, res) => {
                 });
             }
         });
+});
+userRouter.post('/answer', (req, res) => {
+    let sql = `INSERT INTO answers VALUES (NULL, '${req.body.cardId}', '${req.body.name}',${req.body.result})`;
+    connectionPool.query(sql, (error, rows) => {
+        if(error) {
+            console.log(error);
+            res.status(500).send();
+        } else {
+            res.status(200).send();
+        }
+    })
 });
 function userExist(name) {
     console.log("use exist??")
@@ -64,6 +73,5 @@ function insertNewUser(name) {
 
     })
 }
-
-module.exports = cardRouter;
+module.exports = userRouter;
 
