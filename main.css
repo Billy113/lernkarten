@@ -57,6 +57,16 @@ cursor:pointer;
     display: -webkit-inline-box;
     margin-left: 15%;
 }
+.catbutton{
+width: 5vw;
+text-align:center;
+font-size:10px;
+cursor:pointer;
+color:#efefef;
+margin-top:15px;
+margin-left: 10px;
+background-color:#019875;
+}
 .button{
 width:15vw;
 text-align:center;

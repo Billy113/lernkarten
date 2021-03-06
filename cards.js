@@ -5,27 +5,21 @@ let qbank=new Array;
 let color1 = '#1972c5';
 let color2= '#019875';
 let toggleListenerSet = false;
-let questionList;
+let cardList;
 let cats;
-let  choosenHTML = `
-                <label for="Kategorie">Ausgewählte Kategorien: </label>
-                    <select id="chooseCategory" name="category" >
-                </select>`;
-
 let selectHTML = `
-                <label for="Kategorie">Kategorie hinzufügen: </label>
-                    <select id="selectCategory" name="category" >
-                </select>`;
+                <label for="Kategorie">Kategorien ändern</label> <br>
+                <div id="cartCads"></div>`;
 
 function loadDB(json){
-    questionList = json.questionlist;
+    cardList = json.questionlist;
     categoriesAvailable().then(() => {
         displayCard();
     })
 }
 function categoriesAvailable() {
     return new Promise(resolve => {
-        buildPostRequest("/cards/cats", {}).then(catsAvailable => {
+        buildPostRequest("/cards/catsAvailable", {}).then(catsAvailable => {
             catsAvailable.json().then(catsJson => {
                  cats = catsJson;
                  resolve();
@@ -34,26 +28,58 @@ function categoriesAvailable() {
     })
 }
 function buildCategory() {
-    buildPostRequest("/cards/cardCats", {"cardId": questionList[currentQuestion]}).then(cardCats => {
-        for(let cat of cats) {
-            cardCats.json(cardCatsJson => {
-                for(let cardCat of cardCatsJson) {
-                    $("#category").append(`<option value="${cat.name}">${cat.name}</option>`)
+    return new Promise(resolve => {
+        buildPostRequest("/cards/cardCats", {"cardId" : cardList[currentQuestion].id}).then(cardCats => {
+            cardCats.json().then(cardCats => {
+                for(let cat of cats) {
+                    cat.active = false;
+                    $("#cartCads").append(`<div class="catbutton" id="${cat.name}">${cat.name}</input>`)
+                    $("#"+cat.name).css("background-color", "red")
+                    document.getElementById(cat.name).addEventListener("click", catChange);
                 }
+                console.log("cardCats.ke"+ cardCats.length)
+                for(let cardCat of cardCats) {
+                    console.log("tes")
+                    $("#"+cardCat.name).css("background-color", "#019875")
+                    activateCat(cardCat.name);
+                }
+                resolve();
             })
-        }
+        })
     })
 }
+function activateCat(catname) {
+    for(let cat of cats) {
+        if(cat.name == catname) {
+            cat.active = true;
+        }
+    }
+}
+function catChange(event) {
+    for(let cat of cats) {
+        if(cat.name == event.target.id) {
+            cat.active = !cat.active;
+            if(cat.active) {
+                $("#"+cat.name).css("background-color", "#019875")
+                console.log("cardID in catchange" + cardList[currentQuestion].id)
+                buildPostRequest("/cards/setCategory", {"category": cat.name , "cardId": cardList[currentQuestion-1].id});
+            } else {
+                $("#"+cat.name).css("background-color", "red")
+                buildPostRequest("/cards/removeCategory", {"category": cat.name , "cardId": cardList[currentQuestion-1].id});
+            }
+
+        }
+    }
+}
 function displayCard(){
-    buildCategory();
-    console.log("display")
+    console.log( cardList[currentQuestion].id)
     cardState=false;
-    document.getElementById("activityTitle").innerHTML = "Karte: " + questionList[currentQuestion].id + " von: " + questionList.length;
+    document.getElementById("activityTitle").innerHTML = "Karte: " + cardList[currentQuestion].id + " von: " + cardList.length;
     $("#cardArea").empty();
     document.getElementById("cardArea").removeEventListener("click", toggleVisibility);
     document.getElementById("cardArea").addEventListener("click", toggleVisibility);
-    $("#cardArea").append('<div id="card1" class="card">' + questionList[currentQuestion].cardfront + '</div>');
-    $("#cardArea").append('<div id="card2" class="card">' + questionList[currentQuestion].cardback + '</div>');
+    $("#cardArea").append('<div id="card1" class="card">' + cardList[currentQuestion].cardfront + '</div>');
+    $("#cardArea").append('<div id="card2" class="card">' + cardList[currentQuestion].cardback + '</div>');
     $("#card1").css("background-color",color1);
     $("#card2").css("background-color",color2);
     $("#card2").css("visibility","hidden");
@@ -74,20 +100,12 @@ function displayCard(){
     $("#delete").on("click", deleteCard);
     $("#topButtonArea").append('<div class="button" id="back"">zurück</div>');
     $("#topButtonArea").append(selectHTML);
-    $("#category").on('change', logSelection);
     $("#back").on("click", displayMainMenu);
+    buildCategory();
     currentQuestion++;
 }
-function logSelection(event) {
-    buildPostRequest("/cards/setCategory", {"category": event.target.value, "cardId": questionList[currentQuestion-1].id});
-    questionList[currentQuestion-1].category = event.target.value;
- }
-function setCategory(event) {
-    buildPostRequest("/cards/updatecategory",{"category":"" })
-}
-
 function next() {
-    if(currentQuestion<questionList.length){
+    if(currentQuestion<cardList.length){
         displayCard();
     }
     else{
@@ -96,16 +114,16 @@ function next() {
 }
 function deleteCard() {
     index = currentQuestion-1;
-    buildPostRequest("/cards/delete", {"cardId": questionList[index].id})
-    questionList.splice(index,1);
+    buildPostRequest("/cards/delete", {"cardId": cardList[index].id})
+    cardList.splice(index,1);
     next();
 }
 function wrongAnswer() {
-    buildPostRequest("/user/answer",{"result":false, "cardId":questionList[currentQuestion].id});
+    buildPostRequest("/user/answer",{"result":false, "cardId":cardList[currentQuestion-1].id});
     next();
 }
 function rightAnswer() {
-    buildPostRequest("/user/answer",{"result":true, "cardId":questionList[currentQuestion].id});
+    buildPostRequest("/user/answer",{"result":true, "cardId":cardList[currentQuestion-1].id});
     next();
 }
 function toggleVisibility(){
@@ -126,8 +144,8 @@ function hideAll() {
     $("#cardArea").empty();
     $("#buttonArea").empty();
     $("#topButtonArea").empty();
-    $("#newCardArea").append(`<div> <textarea class="inputQuestion input" id="newFront">${questionList[currentQuestion].cardfront}</textarea> </div>`)
-    $("#newCardArea").append(`<div> <textarea class="inputAnswer input" id="newBack">${questionList[currentQuestion].cardback }</textarea/></div>`)
+    $("#newCardArea").append(`<div> <textarea class="inputQuestion input" id="newFront">${cardList[currentQuestion].cardfront}</textarea> </div>`)
+    $("#newCardArea").append(`<div> <textarea class="inputAnswer input" id="newBack">${cardList[currentQuestion].cardback }</textarea/></div>`)
     $("#buttonArea").append('<div class="button" id="send">abschicken</div>');
     $("#buttonArea").append('<div class="button" id="discard">verwerfen</div>');
     $("#send").on("click",sendEditedCard);
@@ -142,15 +160,15 @@ function sendEditedCard() {
     card.question = document.getElementById("newFront").value;
     card.answer = document.getElementById("newBack").value;
     card.category = "ga1";
-    card.id = questionList[currentQuestion].id;
+    card.id = cardList[currentQuestion].id;
     $("#newCardArea").empty();
     buildPostRequest("/cards/update", card);
     updateLokalData(card);
     next();
 }
 function updateLokalData(card) {
-    questionList[currentQuestion].cardfront = card.question;
-    questionList[currentQuestion].cardback = card.answer;
+    cardList[currentQuestion].cardfront = card.question;
+    cardList[currentQuestion].cardback = card.answer;
 }
 function displayFinalMessage(){
     $("#buttonArea").empty();

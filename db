@@ -1,6 +1,6 @@
 table cards (id int auto_increment, frage text, antwort text, category varchar(20), primary key(id));
-table user (name varchar(20), passwordHash BINARY(64) , primary key (name)); 
-table anwsers(id int auto_increment, questionID int, name varchar(20), result boolean, primary key (id)); 
-
+table user (name varchar(20), passwordHash BINARY(64) , primary key (name));
+table anwsers(id int auto_increment, questionID int, name varchar(20), result boolean, primary key (id));
+create table cardCats (cardId int,category varchar(200), primary key(cardId, category));
 
 

@@ -24,10 +24,9 @@ cardRouter.post('/create', (req, res) => {
     })
 });
 
-cardRouter.post('/cats', (req, res) => {
-    readCats().then(cats => {
-        res.status(200).send(cats);
-    })
+cardRouter.post('/removeCategory', (req, res) => {
+    removeCategory(req.body);
+    res.status(200).send();
 });
 cardRouter.post('/setCategory', (req, res) => {
     setCategory(req.body);
@@ -36,6 +35,18 @@ cardRouter.post('/setCategory', (req, res) => {
 cardRouter.post('/delete', (req, res) => {
     deleteCard(req.body.cardId)
     res.status(200).send();
+});
+cardRouter.post('/catsAvailable', (req, res) => {
+    readCats().then(cats => {
+        console.log(cats)
+        res.status(200).send(cats);
+    })
+});
+cardRouter.post('/cardCats', (req, res) => {
+    readCardCats(req.body.cardId).then(cats => {
+        console.log(cats)
+        res.status(200).send(cats);
+    })
 });
 function readCats() {
     return new Promise(resolve => {
@@ -50,9 +61,39 @@ function readCats() {
         })
     })
 }
-function setCategory(card) {
-    let sql = `UPDATE cards answer SET category = "${card.category}" WHERE id = "${card.cardId}"`;
+function readCardCats(cardId) {
+    return new Promise(resolve => {
+        let sql = `SELECT category as name FROM cardCats WHERE cardId = '${cardId}'`;
+        console.log(sql)
+        connectionPool.query(sql, (error, rows) => {
+            if(error) {
+                console.log(error);
+                resolve(false);
+            }
+            resolve(rows);
+        })
+    })
+}
+function removeCategory(body) {
+    let sql = `DELETE FROM cardCats WHERE cardId = "${body.cardId}" AND category = "${body.category}"`;
+    connectionPool.query(sql, (error, rows) => {
+        if(error) {
+            console.log(error);
+        } else {
+
+        }
+    })
+}
+function setCategory(body) {
+    let sql = `INSERT INTO cardCats VALUES("${body.cardId}","${body.category}")`;
     console.log(sql)
+    connectionPool.query(sql, (error, rows) => {
+        if(error) {
+            console.log(error);
+        } else {
+
+        }
+    })
 }
 function deleteCard(id) {
     let sql = `DELETE FROM cards WHERE id='${id}'`;
