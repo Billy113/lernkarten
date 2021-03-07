@@ -1,3 +1,4 @@
+
 const BACKEND_URL = "http://localhost:8001/v1"
 //const BACKEND_URL = "https://www.featurecat.de/api/v1";
 let user;
@@ -158,20 +159,34 @@ function displayStats() {
   })
 }
 function readStats() {
+  let html = "";
+  let cardCount = 0;
+  let statsArr = [];
   buildPostRequest("/cards/answers", {}).then(stats => {
     stats.json().then(answerJson => {
       buildPostRequest("/cards", {"selected" : []}).then(userCards => {
         userCards.json().then(userCardJson => {
-          let stats = {};
-          for(let cat of cats) {
-            let html = `<label for="${cat.name}">${cat.name}</label>`
-            html += `<output name="${cat.name}" > 1 von 30 Fragen Beantwortet (30%)</output> <br>`
-            buildCatStat(cat, answerJson).then(count => {
-              stats.cat = count;
-            });
+          cardCount = userCardJson.length;
 
+          let statPromises = [];
+          for(let cat of cats) {
+            statPromises.push(buildCatStat(cat, answerJson).then(count => {
+                html += `<label for="${cat.name}">${cat.name}</label>`
+                html += `<output name="${cat.name}" > ${count} Fragen richtig beantwortet</output> <br>`
+                statsArr.push ( {"cat": cat, "count": count});
+            }));
           }
-          $("#statArea").append(html)
+          Promise.all(statPromises).then(() => {
+            let sum = 0;
+            console.log(statsArr.length)
+            for(let stat of statsArr) {
+              console.log("count")
+              console.log(stat.count)
+              sum+= stat.count;
+            }
+            let percantage = (cardCount/sum)*100;
+            $("#statArea").append(html)
+          })
         })
       });
     })
@@ -180,16 +195,19 @@ function readStats() {
 function buildCatStat(cat, answerJson) {
   return new Promise (resolve => {
   let count = 0;
+  let answerPromises = [];
   for(let answer of answerJson) {
-    buildPostRequest("/cards/cardCats", {"cardId": answer.questionID}).then(cardCats => {
+   answerPromises.push(buildPostRequest("/cards/cardCats", {"cardId": answer.questionID}).then(cardCats => {
     cardCats.json().then(cardCatsJson => {
        if(answer.result == 1 && cardHasCat(cat, cardCatsJson)) {
           count++;
         }
         })
-      })
+      }))
     }
-    resolve(count);
+    Promise.all(answerPromises).then(() => {
+      resolve(count);
+    })
   })
 }
 function cardHasCat(cat, cardCatIDs) {
