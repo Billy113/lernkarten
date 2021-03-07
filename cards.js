@@ -58,12 +58,12 @@ function buildCategory() {
     return new Promise(resolve => {
         $("#cardCatArea").css("display","-webkit-inline-box");
         $("#cardCatArea").append(`<div class="button" id="closeCat">fertig</input>`)
-        $("#cardCatArea").on("click", () => {
+        $("#closeCat").on("click", () => {
              $("#cardCatArea").css("visibility", "hidden");
              $("#topButtonArea").css("visibility", "visible");
              $("#cardCatArea").empty();
 
-            })
+      })
 
         buildPostRequest("/cards/cardCats", {"cardId" : cardList[currentQuestion].id}).then(cardCats => {
             cardCats.json().then(cardCats => {
