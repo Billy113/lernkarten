@@ -7,15 +7,39 @@ let color2= '#019875';
 let toggleListenerSet = false;
 let cardList;
 let cats;
+let answers;
 let selectHTML = `
-                <label for="Kategorie">Kategorien ändern</label> <br>
                 <div id="cartCads"></div>`;
 
-function loadDB(json){
+function loadDB(json, trim){
     currentQuestion =0;
     cardList = json.questionlist;
     categoriesAvailable().then(() => {
-        displayCard();
+        userAnswers().then(userAnswers => {
+            userAnswers.json().then(userAnswerJson => {
+                console.log(userAnswerJson);
+                answers = userAnswerJson;
+                buildCardList(trim);
+                displayCard();
+            })
+        })
+    })
+}
+function buildCardList(trim) {
+    if(trim) return;
+    for(let i = 0 ; i < cardList.length; i++) {
+        for(let answer of answers) {
+            if(cardList[i].id == answer.questionID && answer.result == 1) {
+                cardList.splice(i,1);
+            }
+        }
+    }
+}
+function userAnswers() {
+    return new Promise(resolve => {
+        buildPostRequest("/cards/answers", {}).then(userAnswers => {
+            resolve(userAnswers);
+        })
     })
 }
 function categoriesAvailable() {
@@ -29,13 +53,23 @@ function categoriesAvailable() {
         });
     })
 }
+
 function buildCategory() {
     return new Promise(resolve => {
+        $("#cardCatArea").css("display","-webkit-inline-box");
+        $("#cardCatArea").append(`<div class="button" id="closeCat">fertig</input>`)
+        $("#cardCatArea").on("click", () => {
+             $("#cardCatArea").css("visibility", "hidden");
+             $("#topButtonArea").css("visibility", "visible");
+             $("#cardCatArea").empty();
+
+            })
+
         buildPostRequest("/cards/cardCats", {"cardId" : cardList[currentQuestion].id}).then(cardCats => {
             cardCats.json().then(cardCats => {
                 for(let cat of cats) {
                     cat.active = false;
-                    $("#cartCads").append(`<div class="catbutton" id="${cat.name}">${cat.name}</input>`)
+                    $("#cardCatArea").append(`<div class="button" id="${cat.name}">${cat.name}</input>`)
                     $("#"+cat.name).css("background-color", "red")
                     document.getElementById(cat.name).addEventListener("click", catChange);
                 }
@@ -97,10 +131,15 @@ function displayCard(){
     $("#edit").on("click", editCard);
     $("#delete").on("click", deleteCard);
     $("#topButtonArea").append('<div class="button" id="back"">zurück</div>');
-    $("#topButtonArea").append(selectHTML);
+    $("#topButtonArea").append('<div class="button" id="Kategorien"">Kategorien</div>');
+    $("#Kategorien").on("click", changeCats);
     $("#back").on("click", displayMainMenu);
-    buildCategory();
+
     currentQuestion++;
+}
+function changeCats() {
+    $("#topButtonArea").css("visibility", "hidden");
+    buildCategory();
 }
 function next() {
     if(currentQuestion<cardList.length){

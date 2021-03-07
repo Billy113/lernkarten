@@ -22,6 +22,10 @@ cardRouter.post('/create', (req, res) => {
     })
 });
 
+cardRouter.post('/store', (req, res) => {
+    writeCard(req.body);
+    res.status(200).send();
+});
 cardRouter.post('/removeCategory', (req, res) => {
     removeCategory(req.body);
     res.status(200).send();
@@ -39,11 +43,30 @@ cardRouter.post('/catsAvailable', (req, res) => {
         res.status(200).send(cats);
     })
 });
+cardRouter.post('/answers', (req, res) => {
+    readAnswers(req.body.name).then(answers => {
+        res.status(200).send(answers);
+    })
+});
 cardRouter.post('/cardCats', (req, res) => {
     readCardCats(req.body.cardId).then(cats => {
         res.status(200).send(cats);
     })
 });
+function writeCard(card) {
+    let sql = `INSERT INTO cards(frage, antwort) values('${card.question}','${card.answer}')`;
+    connectionPool.query(sql, (error, rows) => {
+        if(error) {
+            console.log(error);
+        }
+        storeCats(rows.insertId, card.categorys);
+    })
+}
+function storeCats(id, categoryArr) {
+    for(let cat of categoryArr) {
+        setCategory({"cardId": id, "category":cat});
+    }
+}
 function readCats() {
     return new Promise(resolve => {
         let sql = "SELECT name FROM category";
@@ -111,6 +134,20 @@ function updateCard(card) {
         });
     });
 }
+function readAnswers(name) {
+    return new Promise(resolve => {
+        let sql = `SELECT * FROM answers WHERE answers.name = '${name}'`;
+        connectionPool.query(sql, (error, rows) => {
+            if(error) {
+                console.log(error);
+                resolve();
+            }
+            let answerArr = [];
+            let ret = {};
+            resolve(rows);
+        })
+    })
+}
 function buildSelectSql(catsSelected) {
     let sql = `SELECT * FROM cardCats ` ;
     if(catsSelected.length == 0) {
@@ -124,13 +161,11 @@ function buildSelectSql(catsSelected) {
             sql += ` OR cardCats.category = '${catsSelected[i]}' `
         }
     }
-
     return sql;
 }
 function readCards(catsSelected) {
 return new Promise(resolve => {
     let sql = buildSelectSql(catsSelected);
-    console.log(sql);
     connectionPool.query(sql, (error, rows) => {
         if(error) {
             console.log(error);

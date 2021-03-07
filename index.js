@@ -2,6 +2,7 @@ const BACKEND_URL = "http://localhost:8001/v1"
 //const BACKEND_URL = "https://www.featurecat.de/api/v1";
 let user;
 let cards;
+let catsInBackend;
 function init() {
   document.indexDBHandler = new IndexedDbHandler();
   document.indexDBHandler.loggedIn().then(result => {
@@ -38,11 +39,15 @@ function getCards() {
 }
 function displayCards() {
   getCards().then(() => {
+    loadDB(cards, trimCards());
     fetchAndAppendToBody("cards.html").then(() => {
-      loadDB(cards);
+
     })
-    })
+  })
   }
+function trimCards() {
+  return document.getElementById("trim").checked;
+}
 function displayLogin() {
   fetchAndAppendToBody("./login.html").then(() => {
     registerLoginListener()
@@ -115,10 +120,88 @@ function displayCats() {
   })
 }
 function createCard() {
+  fetchAndAppendToBody("createCard.html").then(() => {
+    for(let cat of cats) {
+      let html = `
+                   <input type="checkbox" id="${cat.name}">
+                   <label for="vehicle1"> ${cat.name}</label>
+                    `
+      $("#catArea").append(html)
+    }
+    $("#cardArea").append(`<div> <textarea class="newQuestion" id="question" placeholder="Frage"></textarea> </div>`)
+    $("#cardArea").append(`<div> <textarea class="newAnswer" input" id="answer" placeholder="Antwort"></textarea/></div>`)
+    registerCreateCardListener();
+  })
 
 }
+function registerCreateCardListener() {
+  document.getElementById("store").addEventListener("click", storeCard);
+  document.getElementById("discard").addEventListener("click", displayMainMenu)
+}
+function storeCard() {
+  let card = {};
+  let categorys = [];
+  card.question = document.getElementById("question").value;
+  card.answer= document.getElementById("answer").value;
+  for(let cat of cats) {
+    if(document.getElementById(cat.name).checked) {
+      categorys.push(cat.name);
+    }
+  }
+  card.categorys = categorys;
+  buildPostRequest("/cards/store", card);
+}
 function displayStats() {
+  fetchAndAppendToBody("stats.html").then(() => {
+    registerStatListener();
+    readStats();
+  })
+}
+function readStats() {
+  buildPostRequest("/cards/answers", {}).then(stats => {
+    stats.json().then(answerJson => {
+      buildPostRequest("/cards", {"selected" : []}).then(userCards => {
+        userCards.json().then(userCardJson => {
+          let stats = {};
+          for(let cat of cats) {
+            let html = `<label for="${cat.name}">${cat.name}</label>`
+            html += `<output name="${cat.name}" > 1 von 30 Fragen Beantwortet (30%)</output> <br>`
+            buildCatStat(cat, answerJson).then(count => {
+              stats.cat = count;
+            });
 
+          }
+          $("#statArea").append(html)
+        })
+      });
+    })
+  });
+}
+function buildCatStat(cat, answerJson) {
+  return new Promise (resolve => {
+  let count = 0;
+  for(let answer of answerJson) {
+    buildPostRequest("/cards/cardCats", {"cardId": answer.questionID}).then(cardCats => {
+    cardCats.json().then(cardCatsJson => {
+       if(answer.result == 1 && cardHasCat(cat, cardCatsJson)) {
+          count++;
+        }
+        })
+      })
+    }
+    resolve(count);
+  })
+}
+function cardHasCat(cat, cardCatIDs) {
+  for(let cardCat of cardCatIDs) {
+    if(cat.name == cardCat.name) {
+      return true;
+    }
+  }
+    return false;
+}
+function registerStatListener() {
+  document.getElementById("statBack").addEventListener("click", displayMainMenu);
 }
 function handleLogin() {
   buildPostRequest("/user/login", {"name" : document.getElementById("name").value}).then(result => {
