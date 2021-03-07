@@ -55,9 +55,11 @@ function categoriesAvailable() {
 }
 
 function buildCategory() {
+    console.log("build")
     return new Promise(resolve => {
         $("#cardCatArea").css("display","-webkit-inline-box");
         $("#cardCatArea").append(`<div class="button" id="closeCat">fertig</input>`)
+        $("#cardCatArea").css("visibility", "visible");
         $("#closeCat").on("click", () => {
              $("#cardCatArea").css("visibility", "hidden");
              $("#topButtonArea").css("visibility", "visible");
