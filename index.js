@@ -5,6 +5,7 @@ let cards;
 function init() {
   document.indexDBHandler = new IndexedDbHandler();
   document.indexDBHandler.loggedIn().then(result => {
+  categoriesAvailable().then(() => {
     if(result) {
           user = result;
           displayMainMenu();
@@ -12,19 +13,28 @@ function init() {
           displayLogin();
     }
   })
+  });
 }
 function getCards() {
   return new Promise(resolve => {
-    buildPostRequest("/cards", {}).then(userCards => {
-      userCards.json().then(cardsJson => {
-        cards = cardsJson;
-        resolve();
-      });
-    }).catch(err => {
-      console.log(err);
-      resolve();
+    document.indexDBHandler.cats().then(usercats => {
+        let catArr=[];
+        for(let cat of usercats) {
+          if(cat.selected) {
+            catArr.push(cat.name);
+          }
+        }
+        buildPostRequest("/cards", {"selected" : catArr}).then(userCards => {
+          userCards.json().then(cardsJson => {
+            cards = cardsJson;
+            resolve();
+          });
+        }).catch(err => {
+          console.log(err);
+          resolve();
+        })
+      })
     })
-  })
 }
 function displayCards() {
   getCards().then(() => {
@@ -60,12 +70,49 @@ function createAccount(event) {
 function registerMainMenueListener() {
   document.getElementById("newCard").addEventListener("click", createCard);
   document.getElementById("stats").addEventListener("click", displayStats);
-  document.getElementById("lern").addEventListener("click", displayCards);
+  document.getElementById("cats").addEventListener("click", displayCats);
   document.getElementById("logout").addEventListener("click", logout);
+}
+function registerCatListener() {
+  document.getElementById("back").addEventListener("click", displayMainMenu);
+  document.getElementById("start").addEventListener("click", displayCards);
 }
 function logout() {
   document.indexDBHandler.logout();
   displayLogin();
+}
+function buildCatButtons() {
+  return new Promise (resolve => {
+    document.indexDBHandler.cats().then(userCats => {
+        for(let cat of cats) {
+            $("#catArea").append(`<div class="button" id="${cat.name}">${cat.name}</div>`)
+            $("#"+cat.name).css("background-color", "red")
+            document.getElementById(cat.name).addEventListener("click", toggleUserCat);
+        }
+        for(let userCat of userCats) {
+          if(userCat.selected) {
+            $("#"+userCat.name).css("background-color", "#019875")
+          }
+        }
+        resolve();
+    })
+  })
+}
+function toggleUserCat(event) {
+   document.indexDBHandler.toggleCat(event.target.id).then(selected => {
+      if(selected) {
+        $("#"+event.target.id).css("background-color", "#019875")
+      } else {
+        $("#"+event.target.id).css("background-color", "red")
+      }
+   });
+
+}
+function displayCats() {
+  fetchAndAppendToBody("cats.html").then(() => {
+    buildCatButtons();
+    registerCatListener();
+  })
 }
 function createCard() {
 

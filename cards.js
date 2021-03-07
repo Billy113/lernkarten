@@ -12,6 +12,7 @@ let selectHTML = `
                 <div id="cartCads"></div>`;
 
 function loadDB(json){
+    currentQuestion =0;
     cardList = json.questionlist;
     categoriesAvailable().then(() => {
         displayCard();
@@ -22,6 +23,7 @@ function categoriesAvailable() {
         buildPostRequest("/cards/catsAvailable", {}).then(catsAvailable => {
             catsAvailable.json().then(catsJson => {
                  cats = catsJson;
+                 document.indexDBHandler.updateCats(cats);
                  resolve();
             })
         });
@@ -37,9 +39,7 @@ function buildCategory() {
                     $("#"+cat.name).css("background-color", "red")
                     document.getElementById(cat.name).addEventListener("click", catChange);
                 }
-                console.log("cardCats.ke"+ cardCats.length)
                 for(let cardCat of cardCats) {
-                    console.log("tes")
                     $("#"+cardCat.name).css("background-color", "#019875")
                     activateCat(cardCat.name);
                 }
@@ -61,20 +61,18 @@ function catChange(event) {
             cat.active = !cat.active;
             if(cat.active) {
                 $("#"+cat.name).css("background-color", "#019875")
-                console.log("cardID in catchange" + cardList[currentQuestion].id)
                 buildPostRequest("/cards/setCategory", {"category": cat.name , "cardId": cardList[currentQuestion-1].id});
             } else {
                 $("#"+cat.name).css("background-color", "red")
                 buildPostRequest("/cards/removeCategory", {"category": cat.name , "cardId": cardList[currentQuestion-1].id});
             }
-
         }
     }
 }
 function displayCard(){
-    console.log( cardList[currentQuestion].id)
     cardState=false;
-    document.getElementById("activityTitle").innerHTML = "Karte: " + cardList[currentQuestion].id + " von: " + cardList.length;
+    let karte = currentQuestion+1;
+    document.getElementById("activityTitle").innerHTML = "Karte: " + karte+ " von: " + cardList.length;
     $("#cardArea").empty();
     document.getElementById("cardArea").removeEventListener("click", toggleVisibility);
     document.getElementById("cardArea").addEventListener("click", toggleVisibility);

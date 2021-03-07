@@ -3,9 +3,7 @@ const cardRouter= express.Router();
 const connectionPool = require('../databaseConnectionPool');
 const Promise = require('bluebird');
 cardRouter.post('/', (req, res) => {
-    readCards(req.body.name).then(cards => {
-        console.log(req.body.name)
-        let name = req.body.name;
+    readCards(req.body.selected).then(cards => {
         res.status(200).send(cards);
     })
 });
@@ -38,13 +36,11 @@ cardRouter.post('/delete', (req, res) => {
 });
 cardRouter.post('/catsAvailable', (req, res) => {
     readCats().then(cats => {
-        console.log(cats)
         res.status(200).send(cats);
     })
 });
 cardRouter.post('/cardCats', (req, res) => {
     readCardCats(req.body.cardId).then(cats => {
-        console.log(cats)
         res.status(200).send(cats);
     })
 });
@@ -64,7 +60,6 @@ function readCats() {
 function readCardCats(cardId) {
     return new Promise(resolve => {
         let sql = `SELECT category as name FROM cardCats WHERE cardId = '${cardId}'`;
-        console.log(sql)
         connectionPool.query(sql, (error, rows) => {
             if(error) {
                 console.log(error);
@@ -86,7 +81,6 @@ function removeCategory(body) {
 }
 function setCategory(body) {
     let sql = `INSERT INTO cardCats VALUES("${body.cardId}","${body.category}")`;
-    console.log(sql)
     connectionPool.query(sql, (error, rows) => {
         if(error) {
             console.log(error);
@@ -97,7 +91,6 @@ function setCategory(body) {
 }
 function deleteCard(id) {
     let sql = `DELETE FROM cards WHERE id='${id}'`;
-    console.log(sql)
     connectionPool.query(sql, (error, rows)=> {
         if(error) {
             console.log(error);
@@ -108,7 +101,6 @@ function deleteCard(id) {
 function updateCard(card) {
     return new Promise(resolve => {
         let sql = `UPDATE cards answer SET antwort = "${card.answer}", frage = "${card.question}", category = "${card.category}" WHERE id = "${card.id}"`;
-        console.log(sql)
         connectionPool.query(sql, (error, rows) => {
             if(error) {
                 console.log(error)
@@ -119,9 +111,26 @@ function updateCard(card) {
         });
     });
 }
-function readCards() {
+function buildSelectSql(catsSelected) {
+    let sql = `SELECT * FROM cardCats ` ;
+    if(catsSelected.length == 0) {
+        return `SELECT * FROM cards` ;
+    }
+    sql += ` INNER JOIN cards ON cards.id = cardCats.cardId WHERE `;
+    for(let i = 0; i<catsSelected.length; i++) {
+        if(i == 0) {
+            sql += ` cardCats.category = '${catsSelected[i]}' `
+        } else {
+            sql += ` OR cardCats.category = '${catsSelected[i]}' `
+        }
+    }
+
+    return sql;
+}
+function readCards(catsSelected) {
 return new Promise(resolve => {
-    let sql = `SELECT * FROM cards`;
+    let sql = buildSelectSql(catsSelected);
+    console.log(sql);
     connectionPool.query(sql, (error, rows) => {
         if(error) {
             console.log(error);
