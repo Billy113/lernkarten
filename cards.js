@@ -1,4 +1,5 @@
 let cardState;
+let catOpen = false;
 let currentQuestion=0;
 let answerResult = false;
 let qbank=new Array;
@@ -53,35 +54,38 @@ function categoriesAvailable() {
         });
     })
 }
-
+function setBackHeader() {
+    catOpen = false;
+    $("#cardCatArea").css("visibility", "hidden");
+    $("#topButtonArea").css("visibility", "visible");
+    $("#cardCatArea").empty();
+}
 function buildCategory() {
-    console.log("build")
     return new Promise(resolve => {
-        $("#cardCatArea").css("display","-webkit-inline-box");
-        $("#cardCatArea").append(`<div class="button" id="closeCat">fertig</input>`)
-        $("#cardCatArea").css("visibility", "visible");
-        $("#closeCat").on("click", () => {
-             $("#cardCatArea").css("visibility", "hidden");
-             $("#topButtonArea").css("visibility", "visible");
-             $("#cardCatArea").empty();
-
-      })
-
-        buildPostRequest("/cards/cardCats", {"cardId" : cardList[currentQuestion].id}).then(cardCats => {
-            cardCats.json().then(cardCats => {
-                for(let cat of cats) {
-                    cat.active = false;
-                    $("#cardCatArea").append(`<div class="button" id="${cat.name}">${cat.name}</input>`)
-                    $("#"+cat.name).css("background-color", "red")
-                    document.getElementById(cat.name).addEventListener("click", catChange);
-                }
-                for(let cardCat of cardCats) {
-                    $("#"+cardCat.name).css("background-color", "#019875")
-                    activateCat(cardCat.name);
-                }
-                resolve();
+        if(catOpen) {
+            $("#cardCatArea").empty();
+            $("#cardCatArea").css("display","-webkit-inline-box");
+            $("#cardCatArea").append(`<div class="button" id="closeCat">fertig</input>`)
+            $("#cardCatArea").css("visibility", "visible");
+            $("#closeCat").on("click", setBackHeader);
+            buildPostRequest("/cards/cardCats", {"cardId" : cardList[currentQuestion].id}).then(cardCats => {
+                cardCats.json().then(cardCats => {
+                    for(let cat of cats) {
+                        cat.active = false;
+                        $("#cardCatArea").append(`<div class="button" id="${cat.name}">${cat.name}</input>`)
+                        $("#"+cat.name).css("background-color", "red")
+                        document.getElementById(cat.name).addEventListener("click", catChange);
+                    }
+                    for(let cardCat of cardCats) {
+                        $("#"+cardCat.name).css("background-color", "#019875")
+                        activateCat(cardCat.name);
+                    }
+                    resolve();
+                })
             })
-        })
+        } else {
+         setBackHeader();
+        }
     })
 }
 function activateCat(catname) {
@@ -110,6 +114,7 @@ function displayCard(){
     let karte = currentQuestion+1;
     document.getElementById("activityTitle").innerHTML = "Karte: " + karte+ " von: " + cardList.length;
     $("#cardArea").empty();
+    buildCategory();
     document.getElementById("cardArea").removeEventListener("click", toggleVisibility);
     document.getElementById("cardArea").addEventListener("click", toggleVisibility);
     $("#cardArea").append('<div id="card1" class="card">' + cardList[currentQuestion].cardfront + '</div>');
@@ -141,6 +146,7 @@ function displayCard(){
 }
 function changeCats() {
     $("#topButtonArea").css("visibility", "hidden");
+    catOpen = true;
     buildCategory();
 }
 function next() {
