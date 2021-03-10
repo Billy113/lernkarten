@@ -13,7 +13,8 @@ let selectHTML = `
                 <div id="cartCads"></div>`;
 
 function loadDB(json, trim){
-    currentQuestion =0;
+    currentQuestion = 0;
+    console.log(json.questionlist)
     cardList = json.questionlist;
     categoriesAvailable().then(() => {
         userAnswers().then(userAnswers => {
@@ -21,10 +22,20 @@ function loadDB(json, trim){
                 console.log(userAnswerJson);
                 answers = userAnswerJson;
                 buildCardList(trim);
+                cardlist = shuffle(cardList);
                 displayCard();
             })
         })
     })
+}
+function shuffle(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
 }
 function buildCardList(trim) {
     if(trim) return;
