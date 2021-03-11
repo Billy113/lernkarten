@@ -23,8 +23,13 @@ cardRouter.post('/create', (req, res) => {
 });
 
 cardRouter.post('/store', (req, res) => {
-    writeCard(req.body);
-    res.status(200).send();
+    writeCard(req.body).then(result=> {
+        if(result) {
+            res.status(200).send();
+        } else {
+            res.status(500).send();
+        }
+    });
 });
 cardRouter.post('/removeCategory', (req, res) => {
     removeCategory(req.body);
@@ -54,12 +59,16 @@ cardRouter.post('/cardCats', (req, res) => {
     })
 });
 function writeCard(card) {
-    let sql = `INSERT INTO cards(frage, antwort) values('${card.question}','${card.answer}')`;
-    connectionPool.query(sql, (error, rows) => {
-        if(error) {
-            console.log(error);
-        }
-        storeCats(rows.insertId, card.categorys);
+    return new Promise(resolve => {
+        let sql = `INSERT INTO cards(frage, antwort) values('${card.question}','${card.answer}')`;
+        connectionPool.query(sql, (error, rows) => {
+            if(error) {
+                console.log(error);
+                resolve(false);
+            }
+            storeCats(rows.insertId, card.categorys);
+            resolve(true);
+        })
     })
 }
 function storeCats(id, categoryArr) {
