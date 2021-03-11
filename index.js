@@ -1,6 +1,6 @@
 
-const BACKEND_URL = "http://localhost:8001/v1"
-//const BACKEND_URL = "https://www.featurecat.de/api/v1";
+//const BACKEND_URL = "http://localhost:8001/v1"
+const BACKEND_URL = "https://www.featurecat.de/api/v1";
 let user;
 let cards;
 let catsInBackend;
@@ -150,7 +150,15 @@ function storeCard() {
     }
   }
   card.categorys = categorys;
-  buildPostRequest("/cards/store", card);
+  buildPostRequest("/cards/store", card).then(result => {
+    if(result.status != 201) {
+      document.getElementById("question").value = "";
+      document.getElementById("answer").value = "gespeichert, danke";
+    } else {
+      document.getElementById("answer").vakue += "Da ist was schief gelaufen :( Bilal informieren?";
+   }
+  });
+
 }
 function displayStats() {
   fetchAndAppendToBody("stats.html").then(() => {
